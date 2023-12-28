@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <%- header %>
+  <title>bolt</title>
+  <style>
+    #container {
+        display: flex;
+        height: calc(100vh - 50px);
+    }
+
+    #leftPanel {
+        width: 200px; /* 设置初始宽度为200px */
+        background: lightblue;
+    }
+
+    #divider {
+        width: 10px;
+        background: gray;
+        cursor: ew-resize;
+        flex-shrink: 0; /* 防止分割栏被压缩 */
+    }
+
+    #rightPanel {
+        flex-grow: 1;
+        background: lightgreen;
+    }
+  </style>
+</head>
+<body>
+<div id="header" style="height: 50px; background: #ddd;">顶部通栏</div>
+<div id="container">
+<div id="leftPanel" style="background: lightblue;"></div>
+<div id="divider" style="width: 10px; background: gray; cursor: ew-resize;"></div>
+<div id="rightPanel" style="flex-grow: 1; background: lightgreen;"></div>
+</div>       
+</body>
+<script>
+const leftPanel = document.getElementById('leftPanel');
+const divider = document.getElementById('divider');
+let isDragging = false;
+
+divider.addEventListener('mousedown', function(e) {
+    e.preventDefault();
+    isDragging = true;
+});
+
+document.addEventListener('mousemove', function(e) {
+    if (isDragging) {
+        const newWidth = e.clientX;
+        leftPanel.style.width = `${newWidth}px`;
+    }
+});
+
+document.addEventListener('mouseup', function() {
+    isDragging = false;
+});
+
+// 防止在拖动时选择页面内容
+document.addEventListener('selectstart', function(e) {
+    if (isDragging) {
+        e.preventDefault();
+    }
+});
+</script>
+</html>
