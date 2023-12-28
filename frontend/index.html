@@ -3,32 +3,21 @@
 <head>
   <%- header %>
   <title>bolt</title>
-  <style>
-    #container {
-        display: flex;
-        height: calc(100vh - 50px);
-    }
-
-    #leftPanel {
-        width: 200px; /* 设置初始宽度为200px */
-        background: lightblue;
-    }
-
-    #divider {
-        width: 10px;
-        background: gray;
-        cursor: ew-resize;
-        flex-shrink: 0; /* 防止分割栏被压缩 */
-    }
-
-    #rightPanel {
-        flex-grow: 1;
-        background: lightgreen;
-    }
-  </style>
 </head>
 <body>
-<div id="header" style="height: 50px; background: #ddd;">顶部通栏</div>
+<nav class="custom-navbar">
+    <a href="#" class="navbar-brand"><i class="bi bi-database"></i></a>
+    <!-- 这里可以放置 Breadcrumb 或其他内容 -->
+    <div class="breadcrumb-container">
+    <div class="breadcrumb">
+      <span>sample.db</span>
+      <span>/</span>
+      <a href="#">分类</a>
+      <span>/</span>
+      <a href="#" class="active">当前页面</a>
+    </div>      
+    </div>
+</nav>
 <div id="container">
 <div id="leftPanel" style="background: lightblue;"></div>
 <div id="divider" style="width: 10px; background: gray; cursor: ew-resize;"></div>

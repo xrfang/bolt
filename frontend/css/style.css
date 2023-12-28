@@ -4,3 +4,75 @@
   padding: 0;
 }
 
+#container {
+  display: flex;
+  height: calc(100vh - 50px);
+}
+
+#leftPanel {
+  width: 200px; /* 设置初始宽度为200px */
+  background: lightblue;
+}
+
+#divider {
+  width: 10px;
+  background: gray;
+  cursor: ew-resize;
+  flex-shrink: 0; /* 防止分割栏被压缩 */
+}
+
+#rightPanel {
+  flex-grow: 1;
+  background: lightgreen;
+}
+
+.custom-navbar {
+  display: flex;
+  height: 50px;
+  align-items: center;
+  background-color: #3f546b;
+  color: white;
+  padding: 0px 10px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);  
+}
+
+.navbar-brand {
+  font-size: 24px;
+  color: white;
+  line-height: 50px;
+}
+
+.breadcrumb-container {
+  display: flex;
+  align-items: center;
+  /* 根据需要添加其他样式 */
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  padding-left: 5px;
+  font-size: 16px;
+}
+
+.breadcrumb a {
+  color: #409EFF; /* Element Plus 主题蓝色 */
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb .icon {
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+.breadcrumb span {
+  margin: 0 5px;
+}
+
+.breadcrumb a.active {
+  color: #606266; /* 激活链接颜色 */
+}
