@@ -11,29 +11,30 @@
 
 #leftPanel {
   width: 200px; /* 设置初始宽度为200px */
-  background: lightblue;
+  background:lightgray;
 }
 
 #divider {
-  width: 10px;
-  background: gray;
   cursor: ew-resize;
   flex-shrink: 0; /* 防止分割栏被压缩 */
+  width: 10px;
+  background: linear-gradient(to right, lightgray, lightgray, white);
 }
 
 #rightPanel {
   flex-grow: 1;
-  background: lightgreen;
+  background: rgb(255, 255, 255);
 }
 
 .custom-navbar {
   display: flex;
+  position: relative;
   height: 50px;
   align-items: center;
-  background-color: #3f546b;
+  background-color: lightgray;
   color: white;
   padding: 0px 10px;
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);  
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);  
 }
 
 .navbar-brand {
@@ -42,37 +43,21 @@
   line-height: 50px;
 }
 
-.breadcrumb-container {
-  display: flex;
-  align-items: center;
-  /* 根据需要添加其他样式 */
+nav button {
+  background-color: transparent; /* 纯平背景 */
+  border: 1px solid #eee; /* 细边框，颜色可以根据需要调整 */
+  color: #333; /* 按钮文字颜色，也可以根据需要调整 */
+  padding: 4px 12px; /* 内边距，根据按钮大小需要调整 */
+  text-align: center; /* 文字居中 */
+  text-decoration: none; /* 去除下划线 */
+  display: inline-block; /* 使按钮不占据整行 */
+  font-size: 16px; /* 字体大小，根据需要调整 */
+  margin: 6px 4px; /* 外边距，提供周围空间 */
+  cursor: pointer; /* 鼠标悬停时显示指针 */
+  transition: all 0.3s ease 0s; /* 平滑过渡效果 */
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  padding-left: 5px;
-  font-size: 16px;
-}
-
-.breadcrumb a {
-  color: #409EFF; /* Element Plus 主题蓝色 */
-  text-decoration: none;
-}
-
-.breadcrumb a:hover {
-  text-decoration: underline;
-}
-
-.breadcrumb .icon {
-  margin-right: 5px;
-  font-size: 16px;
-}
-
-.breadcrumb span {
-  margin: 0 5px;
-}
-
-.breadcrumb a.active {
-  color: #606266; /* 激活链接颜色 */
+nav button:hover {
+  background-color: #f2f2f2; /* 鼠标悬停时的背景颜色变化 */
+  color: #000; /* 鼠标悬停时的文字颜色变化 */
 }
