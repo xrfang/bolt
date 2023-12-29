@@ -4,9 +4,9 @@
   <%- header %>
   <title>bolt</title>
 </head>
-<body>
+<body x-data="dbInfo()">
 <nav class="custom-navbar">
-    <button><i class="bi bi-database"></i></button>
+    <button @click="selectDB"><i class="bi bi-database"></i></button>
     <button>sample.db</button>
     <button>分类</button>
 </nav>
@@ -16,7 +16,9 @@
 <div id="rightPanel"></div>
 </div>       
 </body>
-<script>
+<script type="module">
+import {SelectFile} from './wailsjs/go/main/App.js';
+
 const leftPanel = document.getElementById('leftPanel');
 const divider = document.getElementById('divider');
 let isDragging = false;
@@ -43,5 +45,19 @@ document.addEventListener('selectstart', function(e) {
         e.preventDefault();
     }
 });
+export function dbInfo() {
+    return {
+        dbFile: null,
+        selectDB: async function() {
+            try {
+                const filePath = await window.backend.App.SelectFile();
+                this.dbFile = filePath;
+                console.log("selected:", this.dbFile)
+            } catch (err) {
+                console.error("Error selecting file:", err);
+            }
+        }
+    }
+}
 </script>
 </html>
