@@ -4,19 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/c-bata/go-prompt"
 )
 
+var readonly bool
+
 func main() {
-	defer func() {
-		cmd := exec.Command("/bin/stty", "-raw", "echo")
-		cmd.Stdin = os.Stdin
-		cmd.Run()
-	}()
+	defer resetTTY()
+	flag.BoolVar(&readonly, "readonly", false, "read only mode")
 	ver := flag.Bool("version", false, "show version info")
 	flag.Usage = func() {
 		fmt.Println("BoltDB Editor", verinfo())
@@ -29,20 +26,18 @@ func main() {
 		fmt.Println(verinfo())
 		return
 	}
+	if flag.NArg() > 0 {
+		fp, _ := chkOpenArg(flag.Arg(0))
+		if err := connect(fp); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 	p := prompt.New(
 		executor,
 		completer,
 		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionLivePrefix(promptPrefix),
-		prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
-			if breakline {
-				switch strings.ToLower(in) {
-				case "exit", "quit":
-					return true
-				}
-			}
-			return false
-		}),
 	)
 	p.Run()
 }

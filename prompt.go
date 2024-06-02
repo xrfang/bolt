@@ -3,49 +3,47 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
-	"go.xrfang.cn/shellwords"
 )
 
-// 自定义提示符函数
+func resetTTY() {
+	cmd := exec.Command("/bin/stty", "-raw", "echo")
+	cmd.Stdin = os.Stdin
+	cmd.Run()
+}
+
 func promptPrefix() (string, bool) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "> ", true
+	if len(bkt) == 0 {
+		return "(none)> ", true
 	}
-	return fmt.Sprintf("%s> ", dir), true
+	pfx := filepath.Base(bkt[0])
+	if len(bkt) > 1 {
+		pfx += ":" + strings.Join(bkt[1:], "/")
+	}
+	return fmt.Sprintf("%s> ", pfx), true
 }
 
-func completer(d prompt.Document) []prompt.Suggest {
-	return []prompt.Suggest{
-		{Text: "exit", Description: "Exit this tool"},
-		{Text: "ls", Description: "View keys under current bucket"},
-		{Text: "open", Description: "Open a BoltDB database"},
-		{Text: "quit", Description: "Exit this tool"},
-	}
+func completer(d prompt.Document) (ss []prompt.Suggest) {
+	// text := d.TextBeforeCursor()
+	// p := shellwords.NewParser()
+	// args, err := p.Parse(text)
+	// if err != nil {
+	// fmt.Println(err.Error())
+	// return
+	// }
+	// fmt.Println("completer:", len(args))
+	return
 }
 
-// 交互模式命令执行函数
-func executor(cmd string) {
-	p := shellwords.NewParser()
-	args, err := p.Parse(cmd)
+func executor(cmdline string) {
+	cs, err := ParseCmd(cmdline)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println(err)
 		return
 	}
-	if len(args) == 0 {
-		return
-	}
-	cmd = strings.ToLower(args[0])
-	switch cmd {
-	case "quit", "exit": //直接退出
-	case "open":
-		fmt.Printf("TODO: %+v\n", args)
-	case "ls":
-		fmt.Printf("TODO: %+v\n", args)
-	default:
-		fmt.Printf("unknown command '%s'\n", cmd)
-	}
+	cs[0].Run()
 }
