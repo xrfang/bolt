@@ -3,24 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
-
-	"go.etcd.io/bbolt"
 )
-
-func connect(fp string) error {
-	mode := fs.FileMode(0666)
-	if readonly {
-		mode = fs.FileMode(0444)
-	}
-	db, err = bbolt.Open(fp, mode, nil)
-	if err == nil {
-		bkt = []string{fp}
-	}
-	return err
-}
 
 func open(fp string, create bool) (err error) {
 	st, err := os.Stat(fp)
@@ -34,7 +19,7 @@ func open(fp string, create bool) (err error) {
 	} else if err != nil {
 		return fmt.Errorf("'%s' does not exist", fp)
 	}
-	return connect(fp)
+	return openBoltDB(fp)
 }
 
 func chkOpenArg(fn string) (fp string, err error) {

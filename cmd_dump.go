@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"go.etcd.io/bbolt"
@@ -10,22 +11,23 @@ import (
 func init() {
 	Cmd("dump", "Hexdump the content of a key").WithParams("key").WithHandler(
 		func(c *command) {
-			key := c.Arg("key")
 			view(func(tx *bbolt.Tx) error {
-				if len(bkt) < 2 {
-					fmt.Printf("'%s' not exist or is a bucket\n", key)
-					return nil
+				key := c.Arg("key")
+				if key == "" {
+					return errors.New("key not specified")
 				}
 				b, err := changeDir(tx)
 				if err != nil {
 					return err
 				}
+				if b == nil {
+					return fmt.Errorf("'%s' not exist or is a bucket", key)
+				}
 				val := b.Get([]byte(key))
 				if len(val) == 0 {
-					fmt.Printf("'%s' not exist or is a bucket\n", key)
-				} else {
-					fmt.Print(hex.Dump(val))
+					return fmt.Errorf("'%s' not exist or is a bucket", key)
 				}
+				fmt.Print(hex.Dump(val))
 				return nil
 			})
 		},
