@@ -28,19 +28,32 @@ func promptPrefix() (string, bool) {
 }
 
 func completer(d prompt.Document) (ss []prompt.Suggest) {
-	// text := d.TextBeforeCursor()
-	// p := shellwords.NewParser()
-	// args, err := p.Parse(text)
-	// if err != nil {
-	// fmt.Println(err.Error())
-	// return
-	// }
-	// fmt.Println("completer:", len(args))
+	text := d.CurrentLineBeforeCursor() // CurrentLine() // d.TextBeforeCursor()
+	if text == "" {
+		return
+	}
+	cs, err := ParseCmd(text, false)
+	if err != nil {
+		fmt.Println("completer:", err.Error())
+		return
+	}
+	switch len(cs) {
+	case 0:
+	case 1:
+		//TODO: 这里有问题，需要检查是否完整匹配！！！
+		if strings.HasSuffix(text, " ") {
+			ss = cs[0].SuggestNextArg()
+		}
+	default:
+		for _, c := range cs {
+			ss = append(ss, c.Suggest())
+		}
+	}
 	return
 }
 
 func executor(cmdline string) {
-	cs, err := ParseCmd(cmdline)
+	cs, err := ParseCmd(cmdline, true)
 	if err != nil {
 		fmt.Println(err)
 		return

@@ -4,20 +4,10 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strconv"
-	"unicode"
 
 	"github.com/fatih/color"
 	"go.etcd.io/bbolt"
 )
-
-func isPrintable(s string) bool {
-	for _, r := range s {
-		if !unicode.IsPrint(r) {
-			return false
-		}
-	}
-	return true
-}
 
 func ls(key, val []byte) {
 	sfx := "/"

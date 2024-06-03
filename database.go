@@ -16,7 +16,7 @@ var (
 
 func openBoltDB(fp string) error {
 	opts := bbolt.Options{
-		Timeout: time.Second,
+		Timeout:  time.Second,
 		ReadOnly: readonly,
 	}
 	db, err = bbolt.Open(fp, 0666, &opts)

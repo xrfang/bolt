@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/c-bata/go-prompt"
 	"go.xrfang.cn/shellwords"
 )
 
@@ -14,6 +15,7 @@ type (
 		desc string
 		para []string
 		exec func(*command)
+		cmpl func(*command) []prompt.Suggest
 		_arg map[string]string
 	}
 )
@@ -25,6 +27,11 @@ func (c *command) WithParams(para ...string) *command {
 
 func (c *command) WithHandler(f func(*command)) *command {
 	c.exec = f
+	return c
+}
+
+func (c *command) WithCompleter(p func(*command) []prompt.Suggest) *command {
+	c.cmpl = p
 	return c
 }
 
@@ -42,6 +49,17 @@ func (c *command) Arg(name string) string {
 	return c._arg[name]
 }
 
+func (c *command) Suggest() prompt.Suggest {
+	return prompt.Suggest{Text: c.name, Description: c.desc}
+}
+
+func (c *command) SuggestNextArg() []prompt.Suggest {
+	if c.cmpl == nil {
+		return nil
+	}
+	return c.cmpl(c)
+}
+
 func (c *command) Run() {
 	c.exec(c)
 }
@@ -52,7 +70,7 @@ func Cmd(name, desc string) *command {
 	return c
 }
 
-func ParseCmd(cmdline string) (cs []*command, err error) {
+func ParseCmd(cmdline string, exec bool) (cs []*command, err error) {
 	p := shellwords.NewParser()
 	args, err := p.Parse(cmdline)
 	if err != nil {
@@ -74,7 +92,7 @@ func ParseCmd(cmdline string) (cs []*command, err error) {
 		}
 		return true
 	})
-	if len(cs) != 1 {
+	if len(cs) != 1 && exec {
 		err = errors.New("unknown command: " + args[0])
 	}
 	return
