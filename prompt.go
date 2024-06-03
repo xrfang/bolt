@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/c-bata/go-prompt"
+	"go.xrfang.cn/shellwords"
 )
 
 func resetTTY() {
@@ -32,7 +33,12 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 	if text == "" {
 		return
 	}
-	cs, err := ParseCmd(text, false)
+	p := shellwords.NewParser()
+	args, _ := p.Parse(text)
+	if len(args) == 0 {
+		return
+	}
+	cs, err := ParseCmd(args, false)
 	if err != nil {
 		fmt.Println("completer:", err.Error())
 		return
@@ -40,8 +46,9 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 	switch len(cs) {
 	case 0:
 	case 1:
-		//TODO: 这里有问题，需要检查是否完整匹配！！！
-		if strings.HasSuffix(text, " ") {
+		if cs[0].name != args[0] {
+			ss = append(ss, cs[0].Suggest())
+		} else {
 			ss = cs[0].SuggestNextArg()
 		}
 	default:
@@ -53,7 +60,15 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 }
 
 func executor(cmdline string) {
-	cs, err := ParseCmd(cmdline, true)
+	p := shellwords.NewParser()
+	args, err := p.Parse(cmdline)
+	if len(args) == 0 {
+		if err != nil {
+			fmt.Println("ERROR:", err)
+		}
+		return
+	}
+	cs, err := ParseCmd(args, true)
 	if err != nil {
 		fmt.Println(err)
 		return

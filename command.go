@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/c-bata/go-prompt"
-	"go.xrfang.cn/shellwords"
 )
 
 type (
@@ -70,15 +69,7 @@ func Cmd(name, desc string) *command {
 	return c
 }
 
-func ParseCmd(cmdline string, exec bool) (cs []*command, err error) {
-	p := shellwords.NewParser()
-	args, err := p.Parse(cmdline)
-	if err != nil {
-		return nil, err
-	}
-	if len(args) == 0 {
-		return nil, nil
-	}
+func ParseCmd(args []string, exec bool) (cs []*command, err error) {
 	v, _ := cmds.Load(args[0])
 	if v != nil {
 		c := v.(*command)
