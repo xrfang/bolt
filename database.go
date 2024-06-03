@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"io/fs"
 	"strings"
+	"time"
 
 	"go.etcd.io/bbolt"
 )
@@ -15,11 +15,11 @@ var (
 )
 
 func openBoltDB(fp string) error {
-	mode := fs.FileMode(0666)
-	if readonly {
-		mode = fs.FileMode(0444)
+	opts := bbolt.Options{
+		Timeout: time.Second,
+		ReadOnly: readonly,
 	}
-	db, err = bbolt.Open(fp, mode, nil)
+	db, err = bbolt.Open(fp, 0666, &opts)
 	if err == nil {
 		bkt = []string{fp}
 	}
@@ -49,7 +49,7 @@ func changeDir(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 		b = b.Bucket([]byte(p))
 		if b == nil {
 			return nil, fmt.Errorf("bucket '%s' does not exist",
-				strings.Join(bkt[1:2+i], "/"))
+				strings.Join(bkt[1:3+i], "/"))
 		}
 	}
 	return b, nil
