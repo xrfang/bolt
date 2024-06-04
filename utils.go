@@ -18,14 +18,47 @@ func isPrintable(s string) bool {
 	return true
 }
 
-func getKey(b *bbolt.Bucket, key string) []byte {
-	val := b.Get([]byte(key))
-	if len(val) == 0 {
+func getBkt(b *bbolt.Bucket, key string) *bbolt.Bucket {
+	s := b.Bucket([]byte(key))
+	if s == nil {
 		if hk, err := hex.DecodeString(key); err == nil {
-			return b.Get(hk)
+			return b.Bucket(hk)
 		}
 	}
-	return val
+	return s
+}
+
+func getKey(b *bbolt.Bucket, key string) ([]byte, []byte, bool) {
+	if getBkt(b, key) != nil {
+		return nil, nil, false
+	}
+	hk := []byte(key)
+	val := b.Get(hk)
+	if val == nil {
+		if k, err := hex.DecodeString(key); err == nil {
+			val = b.Get(k)
+			if val != nil {
+				hk = k
+			}
+		}
+	}
+	return hk, val, true
+}
+
+func fuzzyMatch(pattern, subject string) bool {
+	if pattern == "" {
+		return true
+	}
+	idx := -1
+	subject = strings.ToLower(subject)
+	for _, p := range strings.ToLower(pattern) {
+		x := strings.IndexRune(subject[idx+1:], p)
+		if x == -1 {
+			return false
+		}
+		idx += x + 1
+	}
+	return true
 }
 
 func pfxMatch(key []byte, pfx string) *prompt.Suggest {
@@ -33,8 +66,7 @@ func pfxMatch(key []byte, pfx string) *prompt.Suggest {
 	if !isPrintable(target) {
 		target = hex.EncodeToString(key)
 	}
-	if pfx == "" || strings.HasPrefix(strings.ToUpper(target),
-		strings.ToUpper(pfx)) {
+	if fuzzyMatch(pfx, target) {
 		return &prompt.Suggest{Text: target}
 	}
 	return nil
@@ -45,6 +77,52 @@ func countKeys(b *bbolt.Bucket) (cnt int) {
 		if len(v) > 0 {
 			cnt++
 		}
+		return nil
+	})
+	return
+}
+
+func hintKey(arg string) (ss []prompt.Suggest) {
+	view(func(tx *bbolt.Tx) error {
+		if b, _ := changeDir(tx); b != nil {
+			b.ForEach(func(k, v []byte) error {
+				if b.Bucket(k) != nil {
+					return nil
+				}
+				if s := pfxMatch(k, arg); s != nil {
+					ss = append(ss, *s)
+				}
+				return nil
+			})
+		}
+		return nil
+	})
+	return
+}
+
+func hintBucket(arg string) (ss []prompt.Suggest) {
+	view(func(tx *bbolt.Tx) error {
+		b, err := changeDir(tx)
+		if err != nil {
+			return err
+		}
+		if b == nil {
+			tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+				if s := pfxMatch(name, arg); s != nil {
+					ss = append(ss, *s)
+				}
+				return nil
+			})
+			return nil
+		}
+		b.ForEach(func(k, v []byte) error {
+			if b.Bucket(k) != nil {
+				if s := pfxMatch(k, arg); s != nil {
+					ss = append(ss, *s)
+				}
+			}
+			return nil
+		})
 		return nil
 	})
 	return

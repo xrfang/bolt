@@ -24,7 +24,7 @@ func handleRmdir(c *command) {
 			sb = b.Bucket([]byte(dir))
 		}
 		if sb == nil {
-			return fmt.Errorf("'%s' not exist", dir)
+			return fmt.Errorf("'%s' does not exist", dir)
 		}
 		if sb.ForEach(func(k, v []byte) error { return errors.New("has key") }) != nil {
 			return fmt.Errorf("'%s' is not empty", dir)
@@ -38,5 +38,5 @@ func handleRmdir(c *command) {
 
 func init() {
 	Cmd("rmdir", "Remove a bucket").WithParams("dir").WithHandler(handleRmdir).
-		WithCompleter(completeBucket)
+		WithCompleter(hintBucket)
 }

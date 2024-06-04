@@ -48,7 +48,7 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 	case 1:
 		if cs[0].name != args[0] {
 			ss = append(ss, cs[0].Suggest())
-		} else {
+		} else if len(args) > 1 || strings.HasSuffix(text, " ") {
 			ss = cs[0].SuggestNextArg()
 		}
 	default:

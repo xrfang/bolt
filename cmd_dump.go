@@ -19,11 +19,11 @@ func handleDump(c *command) {
 			return err
 		}
 		if b == nil {
-			return fmt.Errorf("'%s' not exist or is a bucket", key)
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		val := b.Get([]byte(key))
-		if len(val) == 0 {
-			return fmt.Errorf("'%s' not exist or is a bucket", key)
+		_, val, ok := getKey(b, key)
+		if !ok {
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
 		fmt.Print(hex.Dump(val))
 		return nil
@@ -32,5 +32,5 @@ func handleDump(c *command) {
 
 func init() {
 	Cmd("dump", "Hexdump the content of a key").WithParams("key").
-		WithCompleter(completeKey).WithHandler(handleDump)
+		WithCompleter(hintKey).WithHandler(handleDump)
 }

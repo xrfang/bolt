@@ -27,8 +27,11 @@ func main() {
 		return
 	}
 	if flag.NArg() > 0 {
-		fp, _ := chkOpenArg(flag.Arg(0))
-		if err := openBoltDB(fp); err != nil {
+		fp, err := chkOpenArg(flag.Arg(0))
+		if err == nil {
+			err = open(fp, false)
+		}
+		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}

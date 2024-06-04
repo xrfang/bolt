@@ -11,8 +11,8 @@ import (
 
 func ls(key, val []byte) {
 	sfx := "/"
-	if len(val) > 0 {
-		sfx = ` (` + strconv.Itoa(len(val)) + `)`
+	if val != nil {
+		sfx = ` (` + strconv.Itoa(len(val)) + ` bytes)`
 	}
 	if isPrintable(string(key)) {
 		fmt.Println(string(key) + sfx)
@@ -38,6 +38,11 @@ func init() {
 					return err
 				}
 				b.ForEach(func(k, v []byte) error {
+					if b.Bucket(k) != nil {
+						v = nil
+					} else if v == nil {
+						v = []byte{}
+					}
 					ls(k, v)
 					return nil
 				})

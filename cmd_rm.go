@@ -18,7 +18,7 @@ func handleRm(c *command) {
 			return err
 		}
 		if b == nil {
-			return fmt.Errorf("'%s' not exist or is a bucket", key)
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
 		if key == "*" {
 			cnt := countKeys(b)
@@ -39,5 +39,5 @@ func handleRm(c *command) {
 
 func init() {
 	Cmd("rm", "Remove a key").WithParams("key").
-		WithHandler(handleRm).WithCompleter(completeKey)
+		WithHandler(handleRm).WithCompleter(hintKey)
 }

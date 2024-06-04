@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/c-bata/go-prompt"
 )
 
 func open(fp string, create bool) (err error) {
@@ -33,29 +35,41 @@ func chkOpenArg(fn string) (fp string, err error) {
 	return filepath.Abs(fn)
 }
 
+func handleCreate(c *command) {
+	fp, err := chkOpenArg(c.Arg("filename"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if err := open(fp, true); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func handleOpen(c *command) {
+	fp, err := chkOpenArg(c.Arg("filename"))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if err := open(fp, false); err != nil {
+		fmt.Println(err)
+	}
+}
+
+func hintFile(arg string) (ss []prompt.Suggest) {
+	fns, _ := filepath.Glob("*")
+	for _, fn := range fns {
+		if fuzzyMatch(arg, fn) {
+			ss = append(ss, prompt.Suggest{Text: fn})
+		}
+	}
+	return
+}
+
 func init() {
-	Cmd("create", "Create a new BoltDB database").WithParams("filename").WithHandler(
-		func(c *command) {
-			fp, err := chkOpenArg(c.Arg("filename"))
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if err := open(fp, true); err != nil {
-				fmt.Println(err)
-			}
-		},
-	)
-	Cmd("open", "Open a BoltDB database").WithParams("filename").WithHandler(
-		func(c *command) {
-			fp, err := chkOpenArg(c.Arg("filename"))
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-			if err := open(fp, true); err != nil {
-				fmt.Println(err)
-			}
-		},
-	)
+	Cmd("create", "Create a new BoltDB database").WithParams("filename").
+		WithHandler(handleCreate)
+	Cmd("open", "Open a BoltDB database").WithParams("filename").
+		WithHandler(handleOpen).WithCompleter(hintFile)
 }

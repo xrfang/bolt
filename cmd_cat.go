@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 	"go.etcd.io/bbolt"
 )
@@ -21,42 +20,25 @@ func handleCat(c *command) {
 			return err
 		}
 		if b == nil {
-			return fmt.Errorf("'%s' not exist or is a bucket", key)
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		val := getKey(b, key)
-		if len(val) == 0 {
-			return fmt.Errorf("'%s' not exist or is a bucket", key)
+		_, val, ok := getKey(b, key)
+		if !ok {
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		if isPrintable(string(val)) {
-			fmt.Println(string(val))
-		} else {
-			hl := color.New(color.FgHiRed)
-			hl.Println(hex.EncodeToString(val))
-		}
-		return nil
-	})
-}
-
-func completeKey(c *command) (ss []prompt.Suggest) {
-	view(func(tx *bbolt.Tx) error {
-		if b, _ := changeDir(tx); b != nil {
-			pfx := c.Arg("key")
-			b.ForEach(func(k, v []byte) error {
-				if len(v) == 0 {
-					return nil
-				}
-				if s := pfxMatch(k, pfx); s != nil {
-					ss = append(ss, *s)
-				}
-				return nil
-			})
+		if len(val) > 0 {
+			if isPrintable(string(val)) {
+				fmt.Println(string(val))
+			} else {
+				hl := color.New(color.FgHiRed)
+				hl.Println(hex.EncodeToString(val))
+			}
 		}
 		return nil
 	})
-	return
 }
 
 func init() {
 	Cmd("cat", "Show content of a key").WithParams("key").
-		WithHandler(handleCat).WithCompleter(completeKey)
+		WithHandler(handleCat).WithCompleter(hintKey)
 }

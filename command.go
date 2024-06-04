@@ -9,12 +9,13 @@ import (
 )
 
 type (
-	command struct {
+	hintFunc func(string) []prompt.Suggest
+	command  struct {
 		name string
 		desc string
 		para []string
 		exec func(*command)
-		cmpl func(*command) []prompt.Suggest
+		cmpl []hintFunc //func(*command) []prompt.Suggest
 		_arg map[string]string
 	}
 )
@@ -29,8 +30,8 @@ func (c *command) WithHandler(f func(*command)) *command {
 	return c
 }
 
-func (c *command) WithCompleter(p func(*command) []prompt.Suggest) *command {
-	c.cmpl = p
+func (c *command) WithCompleter(hfs ...hintFunc) *command {
+	c.cmpl = hfs
 	return c
 }
 
@@ -53,10 +54,17 @@ func (c *command) Suggest() prompt.Suggest {
 }
 
 func (c *command) SuggestNextArg() []prompt.Suggest {
-	if c.cmpl == nil {
+	la := len(c._arg) - 1
+	var arg string
+	if la >= 0 {
+		arg = c._arg[c.para[la]]
+	} else {
+		la = 0
+	}
+	if len(c.cmpl) <= la {
 		return nil
 	}
-	return c.cmpl(c)
+	return c.cmpl[la](arg)
 }
 
 func (c *command) Run() {
