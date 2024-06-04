@@ -11,7 +11,31 @@ import (
 )
 
 func hintDest(arg string) (ss []prompt.Suggest) {
-	return []prompt.Suggest{{Text: "TODO"}}
+	view(func(tx *bbolt.Tx) error {
+		mp, err := mergePath(arg)
+		if err != nil {
+			return err
+		}
+		b := tx.Bucket([]byte(mp[0]))
+		if b == nil {
+			return nil
+		}
+		for _, p := range mp[1:] {
+			s := b.Bucket([]byte(p))
+			if s == nil {
+				break
+			}
+			b = s
+		}
+		ss = []prompt.Suggest{{Text: strings.Join(mp, "/")}}
+		b.ForEachBucket(func(k []byte) error {
+			path := strings.Join(append(mp, string(k)), "/")
+			ss = append(ss, prompt.Suggest{Text: path})
+			return nil
+		})
+		return nil
+	})
+	return
 }
 
 func getSrc(tx *bbolt.Tx, src string) ([]byte, []byte, error) {
@@ -53,6 +77,7 @@ func mergePath(dst string) ([]string, error) {
 	return base, nil
 }
 
+// TODO: multi是给src=*用的，移动所有key到某个目录
 func getDst(tx *bbolt.Tx, dst string, multi bool) (*bbolt.Bucket, string, error) {
 	mp, err := mergePath(dst)
 	if err != nil {
