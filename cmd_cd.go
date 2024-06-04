@@ -26,7 +26,7 @@ func handleCd(c *command) {
 	}
 }
 
-func completeCd(c *command) (ss []prompt.Suggest) {
+func completeBucket(c *command) (ss []prompt.Suggest) {
 	view(func(tx *bbolt.Tx) error {
 		pfx := c.Arg("dir")
 		b, err := changeDir(tx)
@@ -57,5 +57,5 @@ func completeCd(c *command) (ss []prompt.Suggest) {
 
 func init() {
 	Cmd("cd", "Change current dir (open a bucket)").WithParams("dir").
-		WithCompleter(completeCd).WithHandler(handleCd)
+		WithCompleter(completeBucket).WithHandler(handleCd)
 }

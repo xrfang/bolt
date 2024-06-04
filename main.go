@@ -36,7 +36,6 @@ func main() {
 	p := prompt.New(
 		executor,
 		completer,
-		prompt.OptionPrefixTextColor(prompt.Cyan),
 		prompt.OptionLivePrefix(promptPrefix),
 	)
 	p.Run()

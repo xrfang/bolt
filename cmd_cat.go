@@ -23,7 +23,7 @@ func handleCat(c *command) {
 		if b == nil {
 			return fmt.Errorf("'%s' not exist or is a bucket", key)
 		}
-		val := b.Get([]byte(key))
+		val := getKey(b, key)
 		if len(val) == 0 {
 			return fmt.Errorf("'%s' not exist or is a bucket", key)
 		}

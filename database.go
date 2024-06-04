@@ -37,6 +37,17 @@ func view(fn func(*bbolt.Tx) error) {
 	}
 }
 
+func update(fn func(*bbolt.Tx) error) {
+	if db == nil {
+		fmt.Println("ERROR: no database (try 'open' or 'create')")
+		return
+	}
+	err := db.Update(fn)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+	}
+}
+
 func changeDir(tx *bbolt.Tx) (*bbolt.Bucket, error) {
 	if len(bkt) < 2 {
 		return nil, nil //current dir is root
