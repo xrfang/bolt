@@ -48,33 +48,6 @@ func getKey(b *bbolt.Bucket, key string) ([]byte, []byte, bool) {
 	return hk, val, true
 }
 
-func fuzzyMatch(pattern, subject string) bool {
-	if pattern == "" {
-		return true
-	}
-	idx := -1
-	subject = strings.ToLower(subject)
-	for _, p := range strings.ToLower(pattern) {
-		x := strings.IndexRune(subject[idx+1:], p)
-		if x == -1 {
-			return false
-		}
-		idx += x + 1
-	}
-	return true
-}
-
-func pfxMatch(key []byte, pfx string) *prompt.Suggest {
-	target := string(key)
-	if !isPrintable(target) {
-		target = hex.EncodeToString(key)
-	}
-	if fuzzyMatch(pfx, target) {
-		return &prompt.Suggest{Text: target}
-	}
-	return nil
-}
-
 func countKeys(b *bbolt.Bucket) (cnt int) {
 	b.ForEach(func(k, v []byte) error {
 		if len(v) > 0 {
@@ -92,7 +65,7 @@ func hintKey(arg string) (ss []prompt.Suggest) {
 				if b.Bucket(k) != nil {
 					return nil
 				}
-				if s := pfxMatch(k, arg); s != nil {
+				if s := hintMatch(k, arg); s != nil {
 					ss = append(ss, *s)
 				}
 				return nil
@@ -111,7 +84,7 @@ func hintBucket(arg string) (ss []prompt.Suggest) {
 		}
 		if b == nil {
 			tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
-				if s := pfxMatch(name, arg); s != nil {
+				if s := hintMatch(name, arg); s != nil {
 					ss = append(ss, *s)
 				}
 				return nil
@@ -120,7 +93,7 @@ func hintBucket(arg string) (ss []prompt.Suggest) {
 		}
 		b.ForEach(func(k, v []byte) error {
 			if b.Bucket(k) != nil {
-				if s := pfxMatch(k, arg); s != nil {
+				if s := hintMatch(k, arg); s != nil {
 					ss = append(ss, *s)
 				}
 			}
