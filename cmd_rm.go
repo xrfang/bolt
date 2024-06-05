@@ -20,7 +20,7 @@ func handleRm(c *command) {
 		if b == nil {
 			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		if key == "*" {
+		if key == "*" && b.Get([]byte("*")) == nil {
 			cnt := countKeys(b)
 			if cnt == 0 {
 				fmt.Println("0 keys deleted.")

@@ -3,49 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"path"
-	"strings"
 
-	"github.com/c-bata/go-prompt"
 	"go.etcd.io/bbolt"
 )
-
-func hintDest(arg string) (ss []prompt.Suggest) {
-	view(func(tx *bbolt.Tx) error {
-		mp, err := mergePath(arg)
-		if err != nil {
-			return err
-		}
-		b := tx.Bucket([]byte(mp[0]))
-		if b == nil {
-			return nil
-		}
-		var pfx string
-		for _, p := range mp[1:] {
-			s := b.Bucket([]byte(p))
-			if s == nil {
-				pfx = p
-				break
-			}
-			b = s
-		}
-		if pfx != "" {
-			mp = mp[:len(mp)-1]
-		} else {
-			ss = []prompt.Suggest{{Text: "/" + strings.Join(mp, "/")}}
-		}
-		b.ForEachBucket(func(k []byte) error {
-			var hp string
-			if pfx == "" || strings.HasPrefix(string(k), pfx) {
-				hp = strings.Join(append(mp, string(k)), "/")
-				ss = append(ss, prompt.Suggest{Text: "/" + hp})
-			}
-			return nil
-		})
-		return nil
-	})
-	return
-}
 
 func getSrc(tx *bbolt.Tx, src string) ([]byte, []byte, error) {
 	b, err := changeDir(tx)
@@ -57,40 +17,12 @@ func getSrc(tx *bbolt.Tx, src string) ([]byte, []byte, error) {
 		return nil, nil, notExist
 	}
 	key, val, ok := getKey(b, src)
-	if !ok {
+	if !ok || val == nil {
 		return nil, nil, notExist
 	}
 	return key, val, nil
 }
 
-func mergePath(dst string) ([]string, error) {
-	dst = path.Clean(dst)
-	if strings.HasPrefix(dst, "/") {
-		return strings.Split(dst[1:], "/"), nil
-	}
-	var base []string
-	if len(bkt) > 1 {
-		base = append(base, bkt[1:]...)
-	}
-	for _, d := range strings.Split(dst, "/") {
-		switch d {
-		case ".":
-		case "..":
-			if len(base) == 0 {
-				return nil, errors.New("invalid path: " + dst)
-			}
-			base = base[:len(base)-1]
-		default:
-			base = append(base, d)
-		}
-	}
-	if len(base) == 0 {
-		return nil, errors.New("invalid path: " + dst)
-	}
-	return base, nil
-}
-
-// TODO: multi是给src=*用的，移动所有key到某个目录
 func getDst(tx *bbolt.Tx, dst string, multi bool) (*bbolt.Bucket, string, error) {
 	mp, err := mergePath(dst)
 	if err != nil {
@@ -104,6 +36,9 @@ func getDst(tx *bbolt.Tx, dst string, multi bool) (*bbolt.Bucket, string, error)
 	for i, p := range mp[1:] {
 		s := b.Bucket([]byte(p))
 		if s == nil {
+			if multi { //source is multiple keys, destination must be a bucket
+				return nil, "", perr
+			}
 			if v := b.Get([]byte(p)); v != nil {
 				return nil, "", fmt.Errorf("'%s' is an existing key", dst)
 			}
@@ -117,6 +52,25 @@ func getDst(tx *bbolt.Tx, dst string, multi bool) (*bbolt.Bucket, string, error)
 	return b, "", nil
 }
 
+func batchOp(tx *bbolt.Tx, dst *bbolt.Bucket, del bool) (err error) {
+	src, err := changeDir(tx)
+	if err != nil {
+		return err
+	}
+	return src.ForEach(func(k, v []byte) error {
+		if src.Bucket(k) != nil {
+			return nil
+		}
+		if err := dst.Put(k, v); err != nil {
+			return err
+		}
+		if del {
+			return src.Delete(k)
+		}
+		return nil
+	})
+}
+
 func handleCp(c *command) {
 	update(func(tx *bbolt.Tx) error {
 		src := c.Arg("src")
@@ -124,16 +78,23 @@ func handleCp(c *command) {
 		if dst == "" {
 			return errors.New("missing destination")
 		}
-		b, bp, err := getDst(tx, dst, src == "*")
-		if err != nil {
-			return err
-		}
+		var multi bool
 		key, val, err := getSrc(tx, src)
+		if err != nil {
+			if src != "*" {
+				return err
+			}
+			multi = true
+		}
+		b, bp, err := getDst(tx, dst, multi)
 		if err != nil {
 			return err
 		}
 		if bp != "" {
 			key = []byte(bp)
+		}
+		if multi {
+			return batchOp(tx, b, false)
 		}
 		return b.Put(key, val)
 	})
@@ -146,16 +107,23 @@ func handleMv(c *command) {
 		if dst == "" {
 			return errors.New("missing destination")
 		}
-		b, bp, err := getDst(tx, dst, src == "*")
-		if err != nil {
-			return err
-		}
+		var multi bool
 		key, val, err := getSrc(tx, src)
+		if err != nil {
+			if src != "*" {
+				return err
+			}
+			multi = true
+		}
+		b, bp, err := getDst(tx, dst, multi)
 		if err != nil {
 			return err
 		}
 		if bp != "" {
 			key = []byte(bp)
+		}
+		if multi {
+			return batchOp(tx, b, true)
 		}
 		if err := b.Put(key, val); err != nil {
 			return err
@@ -169,7 +137,7 @@ func handleMv(c *command) {
 
 func init() {
 	Cmd("cp", "Copy a key").WithParams("src", "dst").WithHandler(handleCp).
-		WithCompleter(hintKey, hintDest)
+		WithCompleter(hintKey, hintPath)
 	Cmd("mv", "Move (rename) a key").WithParams("src", "dst").WithHandler(handleMv).
-		WithCompleter(hintKey, hintDest)
+		WithCompleter(hintKey, hintPath)
 }

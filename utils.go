@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/hex"
+	"errors"
+	"path"
 	"strings"
 	"unicode"
 
@@ -120,6 +122,80 @@ func hintBucket(arg string) (ss []prompt.Suggest) {
 				if s := pfxMatch(k, arg); s != nil {
 					ss = append(ss, *s)
 				}
+			}
+			return nil
+		})
+		return nil
+	})
+	return
+}
+
+func mergePath(dst string) ([]string, error) {
+	dst = path.Clean(dst)
+	if strings.HasPrefix(dst, "/") {
+		return strings.Split(dst[1:], "/"), nil
+	}
+	var base []string
+	if len(bkt) > 1 {
+		base = append(base, bkt[1:]...)
+	}
+	for _, d := range strings.Split(dst, "/") {
+		switch d {
+		case ".":
+		case "..":
+			if len(base) == 0 {
+				return nil, errors.New("invalid path: " + dst)
+			}
+			base = base[:len(base)-1]
+		default:
+			base = append(base, d)
+		}
+	}
+	return base, nil
+}
+
+func hintPath(arg string) (ss []prompt.Suggest) {
+	hint(func(tx *bbolt.Tx) error {
+		mp, err := mergePath(arg)
+		if err != nil {
+			return err
+		}
+		if len(mp) == 0 {
+			tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+				ss = append(ss, prompt.Suggest{Text: string(name)})
+				return nil
+			})
+			return nil
+		}
+		b := tx.Bucket([]byte(mp[0]))
+		if b == nil {
+			tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+				if fuzzyMatch(mp[0], string(name)) {
+					ss = append(ss, prompt.Suggest{Text: string(name)})
+				}
+				return nil
+			})
+			return nil
+		}
+		var pfx string
+		for _, p := range mp[1:] {
+			s := b.Bucket([]byte(p))
+			if s == nil {
+				pfx = p
+				break
+			}
+			b = s
+		}
+		if pfx != "" {
+			mp = mp[:len(mp)-1]
+		} else {
+			ss = []prompt.Suggest{{Text: "/" + strings.Join(mp, "/")}}
+		}
+		b.ForEachBucket(func(k []byte) error {
+			var hp string
+			if pfx == "" || strings.HasPrefix(string(k), pfx) {
+				hp = strings.Join(append(mp, string(k)), "/")
+				ss = append(ss, prompt.Suggest{Text: "/" + hp})
 			}
 			return nil
 		})
