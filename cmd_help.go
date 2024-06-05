@@ -21,11 +21,11 @@ func init() {
 			if l := len(ss[i].Text); l > maxlen {
 				maxlen = l
 			}
-			return ss[i].Text<ss[j].Text
+			return ss[i].Text < ss[j].Text
 		})
 		maxlen += 1
 		for _, s := range ss {
-			cmd := (s.Text+strings.Repeat(" ", maxlen))[:maxlen]
+			cmd := (s.Text + strings.Repeat(" ", maxlen))[:maxlen]
 			fmt.Println(cmd, s.Description)
 		}
 	})

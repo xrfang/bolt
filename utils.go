@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"path"
@@ -233,4 +234,67 @@ func confirmDo(hint string, f func() error) error {
 	)
 	p.Run()
 	return err
+}
+
+// 该函数处理set和add的value参数，“\x”开头表示16进制，“\b”开头表示base64编码，
+// 除以上两种情形外，如果value本身以“\\”开头，将其转换为“\”。
+func decode(val string) ([]byte, error) {
+	switch {
+	case strings.HasPrefix(val, `\x`):
+		return hex.DecodeString(val[2:])
+	case strings.HasPrefix(val, `\b`):
+		val = strings.ReplaceAll(strings.ReplaceAll(val[2:],
+			"-", "+"), "_", "/")
+		switch len(val) % 4 {
+		case 2:
+			val += "=="
+		case 3:
+			val += "="
+		}
+		return base64.StdEncoding.DecodeString(val)
+	case strings.HasPrefix(val, `\\`):
+		return []byte(val[1:]), nil
+	default:
+		return []byte(val), nil
+	}
+}
+
+// 该函数用连续的空格切分arg为最多n份
+func pargs(arg string, n int) (args []string) {
+	const (
+		backSlash = "\xFE\x01\xFF"
+		space     = "\xFE\x02\xFF"
+		newLine   = "\xFE\x03\xFF"
+	)
+	if arg = strings.TrimSpace(arg); arg == "" || n < 1 {
+		return nil
+	}
+	arg = strings.ReplaceAll(arg, `\\`, backSlash)
+	arg = strings.ReplaceAll(arg, `\ `, space)
+	arg = strings.ReplaceAll(arg, `\n`, newLine)
+	defer func() {
+		for i := range args {
+			args[i] = strings.ReplaceAll(args[i], backSlash, `\`)
+			args[i] = strings.ReplaceAll(args[i], space, ` `)
+			args[i] = strings.ReplaceAll(args[i], newLine, "\n")
+		}
+	}()
+	var word []byte
+	for i, b := range []byte(arg) {
+		if b != ' ' {
+			if len(args) == n-1 {
+				word = append(word, []byte(arg[i:])...)
+				args = append(args, string(word))
+				return
+			}
+			word = append(word, b)
+		} else if len(word) > 0 {
+			args = append(args, string(word))
+			word = nil
+		}
+	}
+	if len(word) > 0 {
+		args = append(args, string(word))
+	}
+	return
 }

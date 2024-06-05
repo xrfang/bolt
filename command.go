@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 
@@ -35,7 +34,7 @@ func (c *command) WithCompleter(hfs ...hintFunc) *command {
 	return c
 }
 
-func (c *command) WithArgs(args []string) *command {
+func (c *command) withArgs(args []string) *command {
 	c._arg = make(map[string]string)
 	for i, p := range c.para {
 		if i < len(args) {
@@ -77,23 +76,37 @@ func Cmd(name, desc string) *command {
 	return c
 }
 
-func ParseCmd(args []string, exec bool) (cs []*command, err error) {
-	v, _ := cmds.Load(args[0])
+func ParseCmd(cmdline string) (argv []string, cs []*command) {
+	ca := strings.SplitN(strings.TrimSpace(cmdline), " ", 2)
+	cmd := ca[0]
+	if cmd == "" {
+		return
+	}
+	v, _ := cmds.Load(cmd)
 	if v != nil {
+		argv = append(argv, cmd)
 		c := v.(*command)
-		cs = append(cs, c.WithArgs(args[1:]))
+		if len(ca) > 1 {
+			args := pargs(ca[1], len(c.para))
+			c.withArgs(args)
+			argv = append(argv, args...)
+		}
+		cs = append(cs, c)
 		return
 	}
 	cmds.Range(func(k, v any) bool {
-		if strings.HasPrefix(k.(string), args[0]) {
+		if strings.HasPrefix(k.(string), cmd) {
+			argv = append(argv, cmd)
 			c := v.(*command)
-			cs = append(cs, c.WithArgs(args[1:]))
+			if len(ca) > 1 {
+				args := pargs(ca[1], len(c.para))
+				c.withArgs(args)
+				argv = append(argv, args...)
+			}
+			cs = append(cs, c)
 		}
 		return true
 	})
-	if len(cs) != 1 && exec {
-		err = fmt.Errorf("unknown command '%s' (try 'help')", args[0])
-	}
 	return
 }
 

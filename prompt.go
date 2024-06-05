@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/c-bata/go-prompt"
-	"go.xrfang.cn/shellwords"
 )
 
 func resetTTY() {
@@ -29,26 +28,14 @@ func promptPrefix() (string, bool) {
 }
 
 func completer(d prompt.Document) (ss []prompt.Suggest) {
-	text := d.CurrentLineBeforeCursor() // CurrentLine() // d.TextBeforeCursor()
-	if text == "" {
-		return
-	}
-	p := shellwords.NewParser()
-	args, _ := p.Parse(text)
-	if len(args) == 0 {
-		return
-	}
-	cs, err := ParseCmd(args, false)
-	if err != nil {
-		fmt.Println("completer:", err.Error())
-		return
-	}
+	text := d.CurrentLineBeforeCursor()
+	argv, cs := ParseCmd(text)
 	switch len(cs) {
 	case 0:
 	case 1:
-		if cs[0].name != args[0] {
+		if cs[0].name != argv[0] {
 			ss = append(ss, cs[0].Suggest())
-		} else if len(args) > 1 || strings.HasSuffix(text, " ") {
+		} else if len(argv) > 1 || strings.HasSuffix(text, " ") {
 			ss = cs[0].SuggestNextArg()
 		}
 	default:
@@ -60,17 +47,9 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 }
 
 func executor(cmdline string) {
-	p := shellwords.NewParser()
-	args, err := p.Parse(cmdline)
-	if len(args) == 0 {
-		if err != nil {
-			fmt.Println("ERROR:", err)
-		}
-		return
-	}
-	cs, err := ParseCmd(args, true)
-	if err != nil {
-		fmt.Println(err)
+	argv, cs := ParseCmd(cmdline)
+	if len(cs) != 1 || cs[0].name != argv[0] {
+		fmt.Printf("unknown command '%s' (try 'help')\n", argv[0])
 		return
 	}
 	cs[0].Run()
