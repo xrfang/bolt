@@ -48,6 +48,9 @@ func completer(d prompt.Document) (ss []prompt.Suggest) {
 
 func executor(cmdline string) {
 	argv, cs := ParseCmd(cmdline)
+	if len(argv) == 0 {
+		return
+	}
 	if len(cs) != 1 || cs[0].name != argv[0] {
 		fmt.Printf("unknown command '%s' (try 'help')\n", argv[0])
 		return
