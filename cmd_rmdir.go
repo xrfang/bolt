@@ -24,7 +24,7 @@ func handleRmdir(c *command) {
 			sb = b.Bucket([]byte(dir))
 		}
 		if sb == nil {
-			return fmt.Errorf("'%s' does not exist", dir)
+			return fmt.Errorf("'%s' does not exist or is not a bucket", dir)
 		}
 		if sb.ForEach(func(k, v []byte) error { return errors.New("has key") }) != nil {
 			return fmt.Errorf("'%s' is not empty", dir)
