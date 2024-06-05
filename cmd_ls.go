@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"strconv"
 
 	"github.com/fatih/color"
 	"go.etcd.io/bbolt"
@@ -12,13 +11,12 @@ import (
 func ls(key, val []byte) {
 	sfx := "/"
 	if val != nil {
-		sfx = ` (` + strconv.Itoa(len(val)) + ` bytes)`
+		sfx = color.HiBlackString(" (%d bytes)", len(val))
 	}
 	if isPrintable(string(key)) {
 		fmt.Println(string(key) + sfx)
 	} else {
-		hl := color.New(color.FgHiRed)
-		hl.Println(hex.EncodeToString(key) + sfx)
+		fmt.Println(color.HiRedString(hex.EncodeToString(key)) + sfx)
 	}
 }
 
