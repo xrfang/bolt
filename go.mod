@@ -6,7 +6,6 @@ require (
 	github.com/c-bata/go-prompt v0.2.6
 	github.com/fatih/color v1.17.0
 	go.etcd.io/bbolt v1.3.10
-	go.xrfang.cn/shellwords v1.0.13
 )
 
 require (

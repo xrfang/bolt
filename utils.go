@@ -48,16 +48,6 @@ func getKey(b *bbolt.Bucket, key string) ([]byte, []byte, bool) {
 	return hk, val, true
 }
 
-func countKeys(b *bbolt.Bucket) (cnt int) {
-	b.ForEach(func(k, v []byte) error {
-		if len(v) > 0 {
-			cnt++
-		}
-		return nil
-	})
-	return
-}
-
 func hintKey(arg string) (ss []prompt.Suggest) {
 	hint(func(tx *bbolt.Tx) error {
 		if b, _ := changeDir(tx); b != nil {

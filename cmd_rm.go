@@ -20,24 +20,41 @@ func handleRm(c *command) {
 		if b == nil {
 			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		hk, _, ok := getKey(b, key)
+		hk, val, ok := getKey(b, key)
 		if !ok {
 			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
-		if key == "*" && b.Get([]byte("*")) == nil {
-			cnt := countKeys(b)
-			if cnt == 0 {
-				fmt.Println("0 keys deleted.")
-				return nil
-			}
-			hint := fmt.Sprintf("Are you sure to delete %d keys?", cnt)
-			return confirmDo(hint, func() error {
-				return b.ForEach(func(k, v []byte) error {
-					return b.Delete(k)
-				})
-			})
+		if val != nil {
+			return b.Delete(hk)
 		}
-		return b.Delete(hk)
+		var todo [][]byte
+		b.ForEach(func(k, v []byte) error {
+			if b.Bucket(k) == nil {
+				if wildMatch(k, key) {
+					todo = append(todo, k)
+				}
+			}
+			return nil
+		})
+		if len(todo) == 0 {
+			fmt.Println("0 keys deleted")
+			return nil
+		}
+		var hint string
+		if len(todo) == 1 {
+			hint = fmt.Sprintf("Delete '%s'?", todo[0])
+		} else {
+			hint = fmt.Sprintf("Are you sure to delete %d keys?", len(todo))
+		}
+		return confirmDo(hint, func() error {
+			for _, k := range todo {
+				if err := b.Delete(k); err != nil {
+					return err
+				}
+			}
+			fmt.Printf("deleted %d keys\n", len(todo))
+			return nil
+		})
 	})
 }
 
