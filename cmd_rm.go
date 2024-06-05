@@ -20,6 +20,10 @@ func handleRm(c *command) {
 		if b == nil {
 			return fmt.Errorf("'%s' does not exist or is a bucket", key)
 		}
+		hk, _, ok := getKey(b, key)
+		if !ok {
+			return fmt.Errorf("'%s' does not exist or is a bucket", key)
+		}
 		if key == "*" && b.Get([]byte("*")) == nil {
 			cnt := countKeys(b)
 			if cnt == 0 {
@@ -33,7 +37,7 @@ func handleRm(c *command) {
 				})
 			})
 		}
-		return b.Delete([]byte(key))
+		return b.Delete(hk)
 	})
 }
 

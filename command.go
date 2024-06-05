@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -92,7 +92,7 @@ func ParseCmd(args []string, exec bool) (cs []*command, err error) {
 		return true
 	})
 	if len(cs) != 1 && exec {
-		err = errors.New("unknown command: " + args[0])
+		err = fmt.Errorf("unknown command '%s' (try 'help')", args[0])
 	}
 	return
 }
