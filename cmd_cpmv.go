@@ -20,17 +20,26 @@ func hintDest(arg string) (ss []prompt.Suggest) {
 		if b == nil {
 			return nil
 		}
+		var pfx string
 		for _, p := range mp[1:] {
 			s := b.Bucket([]byte(p))
 			if s == nil {
+				pfx = p
 				break
 			}
 			b = s
 		}
-		ss = []prompt.Suggest{{Text: strings.Join(mp, "/")}}
+		if pfx != "" {
+			mp = mp[:len(mp)-1]
+		} else {
+			ss = []prompt.Suggest{{Text: "/" + strings.Join(mp, "/")}}
+		}
 		b.ForEachBucket(func(k []byte) error {
-			path := strings.Join(append(mp, string(k)), "/")
-			ss = append(ss, prompt.Suggest{Text: path})
+			var hp string
+			if pfx == "" || strings.HasPrefix(string(k), pfx) {
+				hp = strings.Join(append(mp, string(k)), "/")
+				ss = append(ss, prompt.Suggest{Text: "/" + hp})
+			}
 			return nil
 		})
 		return nil
@@ -55,11 +64,15 @@ func getSrc(tx *bbolt.Tx, src string) ([]byte, []byte, error) {
 }
 
 func mergePath(dst string) ([]string, error) {
+	dst = path.Clean(dst)
+	if strings.HasPrefix(dst, "/") {
+		return strings.Split(dst[1:], "/"), nil
+	}
 	var base []string
 	if len(bkt) > 1 {
 		base = append(base, bkt[1:]...)
 	}
-	for _, d := range strings.Split(path.Clean(dst), "/") {
+	for _, d := range strings.Split(dst, "/") {
 		switch d {
 		case ".":
 		case "..":
@@ -108,6 +121,9 @@ func handleCp(c *command) {
 	update(func(tx *bbolt.Tx) error {
 		src := c.Arg("src")
 		dst := c.Arg("dst")
+		if dst == "" {
+			return errors.New("missing destination")
+		}
 		b, bp, err := getDst(tx, dst, src == "*")
 		if err != nil {
 			return err
@@ -127,6 +143,9 @@ func handleMv(c *command) {
 	update(func(tx *bbolt.Tx) error {
 		src := c.Arg("src")
 		dst := c.Arg("dst")
+		if dst == "" {
+			return errors.New("missing destination")
+		}
 		b, bp, err := getDst(tx, dst, src == "*")
 		if err != nil {
 			return err

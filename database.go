@@ -37,6 +37,13 @@ func view(fn func(*bbolt.Tx) error) {
 	}
 }
 
+func hint(fn func(*bbolt.Tx) error) {
+	if db == nil {
+		return
+	}
+	db.View(fn)
+}
+
 func update(fn func(*bbolt.Tx) error) {
 	if db == nil {
 		fmt.Println("ERROR: no database (try 'open' or 'create')")

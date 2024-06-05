@@ -83,7 +83,7 @@ func countKeys(b *bbolt.Bucket) (cnt int) {
 }
 
 func hintKey(arg string) (ss []prompt.Suggest) {
-	view(func(tx *bbolt.Tx) error {
+	hint(func(tx *bbolt.Tx) error {
 		if b, _ := changeDir(tx); b != nil {
 			b.ForEach(func(k, v []byte) error {
 				if b.Bucket(k) != nil {
@@ -101,7 +101,7 @@ func hintKey(arg string) (ss []prompt.Suggest) {
 }
 
 func hintBucket(arg string) (ss []prompt.Suggest) {
-	view(func(tx *bbolt.Tx) error {
+	hint(func(tx *bbolt.Tx) error {
 		b, err := changeDir(tx)
 		if err != nil {
 			return err
