@@ -35,7 +35,6 @@ func (c *command) WithCompleter(hfs ...hintFunc) *command {
 }
 
 func (c *command) withArgs(args []string) *command {
-	c._arg = make(map[string]string)
 	for i, p := range c.para {
 		if i < len(args) {
 			c._arg[p] = args[i]
@@ -86,6 +85,7 @@ func ParseCmd(cmdline string) (argv []string, cs []*command) {
 	if v != nil {
 		argv = append(argv, cmd)
 		c := v.(*command)
+		c._arg = make(map[string]string)
 		if len(ca) > 1 {
 			args := pargs(ca[1], len(c.para))
 			c.withArgs(args)
@@ -98,6 +98,7 @@ func ParseCmd(cmdline string) (argv []string, cs []*command) {
 		if strings.HasPrefix(k.(string), cmd) {
 			argv = append(argv, cmd)
 			c := v.(*command)
+			c._arg = make(map[string]string)
 			if len(ca) > 1 {
 				args := pargs(ca[1], len(c.para))
 				c.withArgs(args)

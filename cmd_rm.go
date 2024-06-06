@@ -30,14 +30,14 @@ func handleRm(c *command) {
 		var todo [][]byte
 		b.ForEach(func(k, v []byte) error {
 			if b.Bucket(k) == nil {
-				if wildMatch(k, key) {
+				if wildMatch(k, key, false) {
 					todo = append(todo, k)
 				}
 			}
 			return nil
 		})
 		if len(todo) == 0 {
-			fmt.Println("0 keys deleted")
+			summary("0 keys deleted\n")
 			return nil
 		}
 		var hint string
@@ -52,7 +52,7 @@ func handleRm(c *command) {
 					return err
 				}
 			}
-			fmt.Printf("deleted %d keys\n", len(todo))
+			summary("deleted %d keys\n", len(todo))
 			return nil
 		})
 	})

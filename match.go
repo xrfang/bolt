@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/hex"
+	"regexp"
 	"strings"
 
 	"github.com/c-bata/go-prompt"
@@ -38,6 +39,14 @@ func wildcardMatch(pattern, subject string) bool {
 	return matchRune([]rune(subject), []rune(pattern))
 }
 
+func regexMatch(pattern, subject string) bool {
+	r, err := regexp.Compile(pattern)
+	if err != nil {
+		return false
+	}
+	return r.MatchString(subject)
+}
+
 func fuzzyMatch(pattern, subject string) bool {
 	if pattern == "" {
 		return true
@@ -67,10 +76,20 @@ func hintMatch(key []byte, pattern string) *prompt.Suggest {
 }
 
 // only used in arguments in commands like rm/cp/mv
-func wildMatch(key []byte, pattern string) bool {
+func wildMatch(key []byte, pattern string, caseFold bool) bool {
 	target := string(key)
 	if !isPrintable(target) {
 		target = hex.EncodeToString(key)
+	}
+	if strings.HasPrefix(pattern, `\r`) {
+		return regexMatch(pattern[2:], target)
+	}
+	if strings.HasPrefix(pattern, `\\`) {
+		pattern = pattern[1:]
+	}
+	if caseFold {
+		pattern = strings.ToLower(pattern)
+		target = strings.ToLower(target)
 	}
 	return wildcardMatch(pattern, target)
 }

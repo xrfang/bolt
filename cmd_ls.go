@@ -21,12 +21,22 @@ func ls(key, val []byte) {
 }
 
 func init() {
-	Cmd("ls", "View keys under current bucket").WithHandler(
+	Cmd("ls", "View keys under current bucket").WithParams("key").WithHandler(
 		func(c *command) {
-			view(func(tx *bbolt.Tx) error {
+			view(func(tx *bbolt.Tx) (err error) {
+				cnt := 0
+				key := c.Arg("key")
+				defer func() {
+					if err == nil && cnt > 0 {
+						summary("%d items\n", cnt)
+					}
+				}()
 				if len(bkt) < 2 {
 					tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
-						ls(name, nil)
+						if key == "" || wildMatch(name, key, true) {
+							cnt++
+							ls(name, nil)
+						}
 						return nil
 					})
 					return nil
@@ -36,11 +46,15 @@ func init() {
 					return err
 				}
 				b.ForEach(func(k, v []byte) error {
+					if key != "" && !wildMatch(k, key, true) {
+						return nil
+					}
 					if b.Bucket(k) != nil {
 						v = nil
 					} else if v == nil {
 						v = []byte{}
 					}
+					cnt++
 					ls(k, v)
 					return nil
 				})

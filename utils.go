@@ -9,6 +9,7 @@ import (
 	"unicode"
 
 	"github.com/c-bata/go-prompt"
+	"github.com/fatih/color"
 	"go.etcd.io/bbolt"
 )
 
@@ -260,4 +261,10 @@ func pargs(arg string, n int) (args []string) {
 		args = append(args, string(word))
 	}
 	return
+}
+
+var summary func(string, ...any)
+
+func init() {
+	summary = color.New(color.FgHiBlack).PrintfFunc()
 }
