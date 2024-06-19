@@ -158,7 +158,7 @@ func hintPath(arg string) (ss []prompt.Suggest) {
 		}
 		b.ForEachBucket(func(k []byte) error {
 			var hp string
-			if pfx == "" || strings.HasPrefix(string(k), pfx) {
+			if pfx == "" || fuzzyMatch(pfx, string(k)) {
 				hp = strings.Join(append(mp, string(k)), "/")
 				ss = append(ss, prompt.Suggest{Text: "/" + hp})
 			}
