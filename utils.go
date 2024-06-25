@@ -95,6 +95,32 @@ func hintBucket(arg string) (ss []prompt.Suggest) {
 	return
 }
 
+func hintAny(arg string) (ss []prompt.Suggest) {
+	hint(func(tx *bbolt.Tx) error {
+		b, err := changeDir(tx)
+		if err != nil {
+			return err
+		}
+		if b == nil {
+			tx.ForEach(func(name []byte, b *bbolt.Bucket) error {
+				if s := hintMatch(name, arg); s != nil {
+					ss = append(ss, *s)
+				}
+				return nil
+			})
+			return nil
+		}
+		b.ForEach(func(k, v []byte) error {
+			if s := hintMatch(k, arg); s != nil {
+				ss = append(ss, *s)
+			}
+			return nil
+		})
+		return nil
+	})
+	return
+}
+
 func mergePath(dst string) ([]string, error) {
 	dst = path.Clean(dst)
 	if strings.HasPrefix(dst, "/") {
