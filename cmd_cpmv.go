@@ -119,13 +119,10 @@ func handleMv(c *command) {
 		if err != nil {
 			return err
 		}
-		if bp != "" {
-			key = []byte(bp)
-		}
 		if multi {
 			return batchOp(tx, b, true)
 		}
-		if err := b.Put(key, val); err != nil {
+		if err := b.Put([]byte(bp), val); err != nil {
 			return err
 		}
 		if b, err = changeDir(tx); err == nil {
